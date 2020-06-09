@@ -1,4 +1,4 @@
-FROM nginx:stable-alpine
+FROM nginx:1.18.0-alpine
 
 # support running as arbitrary user which belogs to the root group
 RUN chmod g+rwx /var/cache/nginx /var/run /var/log/nginx
