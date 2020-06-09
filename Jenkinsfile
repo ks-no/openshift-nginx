@@ -26,14 +26,10 @@ pipeline {
 
             }
         }
-        stage("build image") {
-            parallel {
-                stage('build image') {
-                    steps {
-                        script {
-                            buildDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
-                        }
-                    }
+        stage("build image") {       
+            steps {
+                script {
+                    buildDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
                 }
             }
         }
@@ -65,6 +61,7 @@ pipeline {
                 gitPush()
             }
         }
+        
         stage("push images") {
             steps {
                 script {
