@@ -1,4 +1,4 @@
-FROM nginx:1.19.2-alpine
+FROM nginx:1.19.3-alpine
 
 # 1. support running as arbitrary user which belogs to the root group
 # 2. users are not allowed to listen on priviliged ports
