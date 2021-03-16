@@ -1,10 +1,10 @@
 version: 2
 registries:
-  docker-registry-docker-all-artifactory-fiks-ks-no:
+  docker-all:
     type: docker-registry
     url: https://docker-all.artifactory.fiks.ks.no
     username: tok-dependabot
-    password: "${{secrets.DOCKER_REGISTRY_DOCKER_ALL_ARTIFACTORY_FIKS_KS_NO_PASSWORD}}"
+    password: ${{secrets.DEPENDABOT}}
 updates:
 - package-ecosystem: docker
   directory: "/nginx"
@@ -14,4 +14,4 @@ updates:
     timezone: Europe/Oslo
   open-pull-requests-limit: 15
   registries:
-  - docker-registry-docker-all-artifactory-fiks-ks-no
+  - docker-all
