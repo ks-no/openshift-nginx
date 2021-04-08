@@ -74,8 +74,7 @@ pipeline {
                 stage("Publish to Github Packages") {
                     when {
                         anyOf{
-                            branch 'master'
-                            branch 'main'
+                            expression { params.isRelease }
                         }
                     }
                     steps {
