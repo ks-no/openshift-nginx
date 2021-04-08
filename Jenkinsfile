@@ -61,17 +61,31 @@ pipeline {
                 gitPush()
             }
         }
-        
-        stage("push images") {
-            steps {
-                script {
-                    buildAndPushDockerImageGH(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
-                    buildAndPushDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], params.isRelease, "nginx")
+        stage("push images ") { 
+            parallel {
+                stage("Publish to internal repo") {
+                    steps {
+                        script {
+                            buildAndPushDockerImageGH(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
+                        }
+                    } 
                 }
-            } 
-        }
-        
 
+                stage("Publish to Github Packages") {
+                    when {
+                        anyOf{
+                            branch 'master'
+                            branch 'main'
+                        }
+                    }
+                    steps {
+                        script {
+                            buildAndPushDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], params.isRelease, "nginx")
+                        }
+                    }
+                }
+            }
+        }
         stage('Release: Set new snapshot version') {
             when {
                 expression { params.isRelease }
