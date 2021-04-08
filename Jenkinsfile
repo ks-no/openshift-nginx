@@ -66,7 +66,7 @@ pipeline {
                 stage("Publish to internal repo") {
                     steps {
                         script {
-                            buildAndPushDockerImageGH(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
+                            buildAndPushDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], params.isRelease, "nginx")
                         }
                     } 
                 }
@@ -80,7 +80,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            buildAndPushDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], params.isRelease, "nginx")
+                            buildAndPushDockerImageGH(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
                         }
                     }
                 }
