@@ -65,6 +65,7 @@ pipeline {
         stage("push images") {
             steps {
                 script {
+                    buildAndPushDockerImageGH(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], "nginx")
                     buildAndPushDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], params.isRelease, "nginx")
                 }
             } 
