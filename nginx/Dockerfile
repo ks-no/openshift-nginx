@@ -1,5 +1,8 @@
 FROM nginx:1.21.6-alpine
 
+# Remove default welcome page
+RUN rm /usr/share/nginx/html/index.html
+
 # 1. support running as arbitrary user which belogs to the root group
 # 2. users are not allowed to listen on priviliged ports
 # 3. comment user directive as master process is run as user in OpenShift anyhow
