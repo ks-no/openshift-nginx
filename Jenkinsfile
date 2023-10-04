@@ -38,15 +38,14 @@ pipeline {
                 branch 'main'
             }
             steps {
-                withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-all.artifactory.fiks.ks.no') {
-                    sh(script: "curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s -- && docker sbom version && docker sbom ${env.IMAGE_NAME}:${env.CURRENT_VERSION} --output sbom.json --format cyclonedx-json", label: "Lager sbom")
-                }
-                catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
-                    publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'target/bom.json')
+                dir(path: "nginx") {
+                    sh script: "docker build --attest type=sbom,generator=docker/scout-sbom-indexer:latest --output build ." label: 'Genererer sbom'
+                    catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
+                        publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'build/sbom.spdx.json')
+                    } 
                 }
             }
         }
-
         stage('Release: Set new release version') {
             when {
                 allOf {
