@@ -36,7 +36,10 @@ pipeline {
 
         stage('Release: Set new release version') {
             when {
-                expression { params.isRelease }
+                allOf {
+                    expression { params.isRelease }
+                    branch 'main'
+                }
             }
 
             steps {
@@ -51,7 +54,7 @@ pipeline {
                     currentBuild.description = "Release: ${params.releaseVersion}"
                 }
 
-                gitCheckout()
+                gitCheckout("main")
 
                 writeFile(file: "${env.WORKSPACE}/version", text: params.releaseVersion);
 
@@ -87,7 +90,10 @@ pipeline {
         }
         stage('Release: Set new snapshot version') {
             when {
-                expression { params.isRelease }
+                allOf {
+                    expression { params.isRelease }
+                    branch 'main'
+                }
             }
 
             steps {
