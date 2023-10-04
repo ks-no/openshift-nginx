@@ -38,8 +38,8 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh script: "curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --", label: "Installerer docker sbom plugin"
                 withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-all.artifactory.fiks.ks.no') {
+                    // sh script: "curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --", label: "Installerer docker sbom plugin"
                     sh script: "docker sbom version && docker sbom ${env.IMAGE_NAME}:${env.CURRENT_VERSION} --output sbom.json --format cyclonedx-json", label: "Lager sbom"
                 }
                 catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
