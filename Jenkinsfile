@@ -42,7 +42,8 @@ pipeline {
                 sh(script: "docker-scout sbom --output sbom.json --format json fs://nginx/.", label: 'Genererer sbom')
                 catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
                     publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'sbom.json')
-                } 
+                }
+                sh(script: "docker-scout cves --only-severity high,critical -e fs://nginx/.", label: 'Sjekker for kjente sårbarheter') 
             }
             post {
                 success {
