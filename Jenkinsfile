@@ -39,9 +39,9 @@ pipeline {
             }
             steps {
                 dir(path: "nginx") {
-                    sh(script: "docker build --attest type=sbom,generator=docker/scout-sbom-indexer:latest --output build .", label: 'Genererer sbom')
+                    sh(script: "docker-scout sbom --output build/build.sbom --format json fs://.", label: 'Genererer sbom')
                     catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
-                        publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'build/sbom.spdx.json')
+                        publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'build/build.sbom')
                     } 
                 }
             }
