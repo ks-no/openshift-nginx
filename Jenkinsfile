@@ -43,7 +43,7 @@ pipeline {
                 catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
                     publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'sbom.json')
                 }
-                withDockerRegistry(credentialsId: "docker-hub-credentials", url: "https://registry.hub.docker.com") {
+                withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-all.artifactory.fiks.ks.no') {
                     sh(script: "docker-scout cves --only-severity high,critical -e fs://nginx/.", label: 'Sjekker for kjente sårbarheter')
                 } 
             }
