@@ -107,6 +107,14 @@ pipeline {
             }
         }
     }
+    post {
+       always {
+            jiraSendBuildInfo(
+                site: "ksfiks.atlassian.net"
+            )
+            deleteDir()
+        }
+    }
 }
 
 def buildUser() {
