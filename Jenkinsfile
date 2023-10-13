@@ -67,8 +67,8 @@ pipeline {
 
             steps {
                 gitCheckout("main")
-                sh(script: "git tag -a ${env.RELEASE_VERSION} -m \"Releasing jenkins build ${env.BUILD_NUMBER}\"", label: "Tagging release ${env.RELEASE_VERSION}")
-                writeFile(file: "${env.WORKSPACE}/version", text: env.RELEASE_VERSION);
+                sh(script: "git tag -f -a ${env.RELEASE_VERSION} -m \"Releasing jenkins build ${env.BUILD_NUMBER}\"", label: "Tagging release ${env.RELEASE_VERSION}")
+                writeFile(file: "${env.WORKSPACE}/version", text: env.NEXT_VERSION);
                 sh(script: 'git add version && git commit -a -m "Prepare further development"', label: "Commit oppdatert versjonsfil")
             }
             post {
