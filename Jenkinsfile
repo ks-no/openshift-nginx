@@ -8,8 +8,11 @@ pipeline {
 
     parameters {
         booleanParam(defaultValue: false, description: 'Skal prosjektet releases?', name: 'isRelease')
-        string(name: "releaseVersion", defaultValue: "", description: "Hva er det nye versjonsnummeret?")
-        string(name: "snapshotVersion", defaultValue: "", description: "Hva er den nye snapshotversjonen? (uten -SNAPSHOT postfix)")
+    }
+    environment {
+        RELEASE_VERSION = readFile("version").trim()
+        NEXT_VERSION = sh(script: "./increment_version.sh -p ${RELEASE_VERSION}", returnStdout: true).trim()
+        user = buildUser()
     }
 
     stages {
@@ -20,9 +23,9 @@ pipeline {
                     env.IMAGE_NAME = 'fiks-nginx-openshift'
                     env.GIT_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').substring(0, 7)
                     env.WORKSPACE = pwd()
-                    env.CURRENT_VERSION = readFile "${env.WORKSPACE}/version"
-                    env.CURRENT_VERSION = env.CURRENT_VERSION.replace("SNAPSHOT", env.GIT_SHA)
+                    env.CURRENT_VERSION = chartVersion(RELEASE_VERSION, GIT_BRANCH, BUILD_NUMBER, params.isRelease) 
                     env.IMAGE_TAG = env.CURRENT_VERSION
+                    env.REPO_NAME = scm.getUserRemoteConfigs()[0].getUrl().tokenize('/').last().split("\\.")[0]
                 }
 
             }
@@ -63,25 +66,20 @@ pipeline {
             }
 
             steps {
-                script {
-                    if (params.releaseVersion == null || params.releaseVersion == "" || params.snapshotVersion == null || params.snapshotVersion == ""){
-                        currentBuild.result = 'ABORTED'
-                        error("release and snapshot version must be set")
-                    }
-
-                    env.CURRENT_VERSION = params.releaseVersion
-                    env.IMAGE_TAG = env.CURRENT_VERSION
-                    currentBuild.description = "Release: ${params.releaseVersion}"
-                }
-
                 gitCheckout("main")
-
-                writeFile(file: "${env.WORKSPACE}/version", text: params.releaseVersion);
-
-                sh 'git add version'
-                sh 'git commit -m "new release version"'
-                sh "git tag -a ${params.releaseVersion} -m \"Releasing jenkins build ${env.BUILD_NUMBER}\""
-                gitPush()
+                sh(script: "git tag -a ${env.RELEASE_VERSION} -m \"Releasing jenkins build ${env.BUILD_NUMBER}\"", label: "Tagging release ${env.RELEASE_VERSION}")
+                writeFile(file: "${env.WORKSPACE}/version", text: params.NEXT_VERSION);
+                sh(script: 'git add version && git commit -a -m "Prepare further development"', label: "Commit oppdatert versjonsfil")
+            }
+            post {
+                success {
+                    gitPush()
+                    script {
+                        currentBuild.description = "${env.user} released version ${env.NEXT_VERSION}"
+                    }
+                    httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', authentication: 'Github-token-login', httpMode: 'POST', requestBody: "Release utført av ${env.user}", url: "https://api.github.com/repos/ks-no/${env.repo}/releases", consoleLogResponseBody: true, validResponseCodes: "201"
+                }
+                
             }
         }
         stage("push images ") { 
@@ -108,20 +106,11 @@ pipeline {
                 }
             }
         }
-        stage('Release: Set new snapshot version') {
-            when {
-                allOf {
-                    expression { params.isRelease }
-                    branch 'main'
-                }
-            }
+    }
+}
 
-            steps {
-                writeFile(file: "${env.WORKSPACE}/version", text: "${params.snapshotVersion}-SNAPSHOT");
-                sh 'git add version'
-                sh "git commit -m \"Setting new snapshot version to ${params.snapshotVersion}-SNAPSHOT\""
-                gitPush()
-            }
-        }
+def buildUser() {
+    wrap([$class: 'BuildUser']) {
+        return sh(script: 'echo "${BUILD_USER}"', returnStdout: true).trim()                
     }
 }
