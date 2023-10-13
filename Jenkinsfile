@@ -74,10 +74,12 @@ pipeline {
             post {
                 success {
                     gitPush()
+                    warnError(message: "Feilet under opprettelse av release i Github repo") {
+                        httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', authentication: 'Github-token-login', httpMode: 'POST', requestBody: "Release utført av ${env.user}", url: "https://api.github.com/repos/ks-no/${env.REPO_NAME}/releases", consoleLogResponseBody: true, validResponseCodes: "201"
+                    }
                     script {
                         currentBuild.description = "${env.user} released version ${env.NEXT_VERSION}"
                     }
-                    httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', authentication: 'Github-token-login', httpMode: 'POST', requestBody: "Release utført av ${env.user}", url: "https://api.github.com/repos/ks-no/${env.repo}/releases", consoleLogResponseBody: true, validResponseCodes: "201"
                 }
                 
             }
