@@ -37,25 +37,6 @@ pipeline {
                 }
             }
         }
-        stage("security check") {
-            when {
-                branch 'main'
-            }
-            steps {
-                withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-local-snapshots.artifactory.fiks.ks.no') {
-                    catchError {
-                        sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-local-snapshots.artifactory.fiks.ks.no/${IMAGE_NAME}:${CURRENT_VERSION}"
-                    }
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: "*-sbom.json", fingerprint: true, allowEmptyArchive: true
-                    publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, "${IMAGE_NAME}-sbom.json")
-                }
-            }
-
-        }
         stage('Release: Set new release version') {
             when {
                 allOf {
@@ -90,7 +71,18 @@ pipeline {
                         script {
                             buildAndPushDockerImage(env.IMAGE_NAME, [env.CURRENT_VERSION, 'latest'], [], params.isRelease, "nginx")
                         }
-                    } 
+                        withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-local-snapshots.artifactory.fiks.ks.no') {
+                            catchError {
+                                sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-local-snapshots.artifactory.fiks.ks.no/${IMAGE_NAME}:${CURRENT_VERSION}"
+                            }
+                        }
+                    }
+                    post {
+                        success {
+                            archiveArtifacts artifacts: "*-sbom.json", fingerprint: true, allowEmptyArchive: true
+                            publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, "${IMAGE_NAME}-sbom.json")
+                        }
+                    }                     
                 }
 
                 stage("Publish to Github Packages") {
