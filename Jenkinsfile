@@ -44,7 +44,7 @@ pipeline {
             steps {
                 withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-all.artifactory.fiks.ks.no') {
                     catchError {
-                        sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-all.artifactory.fiks.ks.no/${IMAGE_NAME}:${env.CURRENT_VERSION}"
+                        sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-local-snapshots.fiks.ks.no/${IMAGE_NAME}:${CURRENT_VERSION}"
                     }
                 }
             }
