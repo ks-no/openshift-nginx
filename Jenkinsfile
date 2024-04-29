@@ -42,17 +42,16 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh(script: "docker-scout sbom --output sbom.json --format json fs://nginx/.", label: 'Genererer sbom')
-                catchError(message: "Feilet under opplasting av bom til DependencyTrack") {
-                    publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, 'sbom.json')
+                withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-all.artifactory.fiks.ks.no') {
+                    catchError {
+                        sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-all.artifactory.fiks.ks.no/${IMAGE_NAME}:${env.CURRENT_VERSION}"
+                    }
                 }
-                withDockerRegistry(credentialsId: "docker-hub-credentials", url: "") {
-                    sh(script: "docker-scout cves --only-severity high,critical -e fs://nginx/.", label: 'Sjekker for kjente sårbarheter')
-                } 
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'sbom.json', fingerprint: true, allowEmptyArchive: true
+                    archiveArtifacts artifacts: "*-sbom.json", fingerprint: true, allowEmptyArchive: true
+                    publishDependencyTrack("2a2f37ae-e189-4e28-b434-8866f86346b3", env.IMAGE_NAME, env.CURRENT_VERSION, "${IMAGE_NAME}-sbom.json")
                 }
             }
 
