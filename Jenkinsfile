@@ -42,9 +42,9 @@ pipeline {
                 branch 'main'
             }
             steps {
-                withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-all.artifactory.fiks.ks.no') {
+                withDockerRegistry(credentialsId: 'artifactory-token-based', url: 'https://docker-local-snapshots.artifactory.fiks.ks.no') {
                     catchError {
-                        sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-local-snapshots.fiks.ks.no/${IMAGE_NAME}:${CURRENT_VERSION}"
+                        sh script: "docker sbom --format cyclonedx-json -o ${IMAGE_NAME}-sbom.json docker-local-snapshots.artifactory.fiks.ks.no/${IMAGE_NAME}:${CURRENT_VERSION}"
                     }
                 }
             }
