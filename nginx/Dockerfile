@@ -1,4 +1,4 @@
-FROM nginx:1.27.5-alpine
+FROM nginx:1.28.0-alpine
 
 # Remove default welcome page
 RUN rm /usr/share/nginx/html/index.html
