@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: openshift-nginx
+  title: OpenShift NGINX
+  description: >
+    NGINX Docker-image optimalisert for OpenShift med skrivebare mapper og port 8081.
+  annotations:
+    github.com/project-slug: ks-no/openshift-nginx
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - docker
+    - openshift
+spec:
+  type: tool
+  owner: group:team-utviklerplattform
+  lifecycle: production
