@@ -33,8 +33,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Set up Git credentials
+        uses: ks-no/github-actions-public/setup-github-app@main
+        id: setup-github-app
+        with:
+          ks_github_app_id: ${{ secrets.KS_RUNNER_APP_ID }}
+          ks_github_app_private_key: ${{ secrets.KS_RUNNER_PRIVATE_KEY }}
+
       - name: Checkout
         uses: ks-no/github-actions-public/checkout@main
+        with:
+          token: '${{ steps.setup-github-app.outputs.app_token }}'
 
       - name: Resolve version
         id: version
