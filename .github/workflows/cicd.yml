@@ -1,0 +1,88 @@
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      is_release:
+        description: 'Skal prosjektet releases?'
+        type: boolean
+        default: false
+      # Velg enten semver_increment ELLER version – ikke begge.
+      # Om begge settes vil den reusable workflowen feile.
+      semver_increment:
+        description: 'Select semver increment version. Fails if version input if selected.'
+        required: false
+        type: choice
+        options:
+          - ''
+          - next major
+          - next minor
+          - next patch
+      version:
+        description: 'Exact version number to release. Fails if semver_increment input is selected.'
+        required: false
+
+env:
+  IMAGE_NAME: fiks-nginx-openshift
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: ks-no/github-actions-public/checkout@main
+
+      - name: Resolve version
+        id: version
+        uses: ks-no/github-actions-public/complete-version-resolvement@main
+        with:
+          semver_increment: ${{ inputs.semver_increment }}
+          version: ${{ inputs.version }}
+          is_release: ${{ inputs.is_release || 'false' }}
+
+      - name: Build and push Docker image
+        uses: ks-no/github-actions-public/publish-docker-no-jib@main
+        with:
+          artifactory_username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          build_name: KS Nginx for OpenShift
+          image_name: ${{ env.IMAGE_NAME }}
+          is_release: ${{ inputs.is_release }}
+          dockerfile: 'nginx/Dockerfile'
+          tags: ${{ steps.version.outputs.resolved_version }}
+
+      - name: Create release tag
+        if: github.ref == 'refs/heads/main' && inputs.is_release == 'true'
+        run: |
+          git tag -a "${{ steps.version.outputs.resolved_version }}" \
+            -m "Releasing build ${{ github.run_number }}"
+          git push origin "${{ steps.version.outputs.resolved_version }}"
+
+      - name: Build SBOM using the Syft plugin for Docker
+        id: sbom
+        run: |
+          BOM_FILE="${{ env.IMAGE_NAME }}-sbom.json"
+          curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
+          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}
+          echo "bom_file=$BOM_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload SBOM to Dependency-Track
+        uses: ks-no/github-actions-public/sbom-upload-and-report@main
+        with:
+          dependency_track_api_key: ''
+          bom_file: ${{ steps.sbom.outputs.bom_file }}
+
+      - name: Publish to GitHub Packages
+        run: |
+          TARGET_IMAGE="${REGISTRY}/ks-no/openshift-nginx/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.resolved_version }}"
+          docker
+          docker tag ${{ env.IMAGE_NAME }} "$TARGET_IMAGE"
+          docker login -u ${{ github.actor }} -p "$PASSWORD" "$REGISTRY"
+          docker push "$TARGET_IMAGE"
+          docker logout "$REGISTRY"
+        env:
+          PASSWORD: ${{ secrets.OPENSHIFT_NGINX_PUBLISH_PAGE }} # expires May 7, 2027
