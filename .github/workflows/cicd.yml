@@ -55,6 +55,13 @@ jobs:
           dockerfile: 'nginx/Dockerfile'
           tags: ${{ steps.version.outputs.resolved_version }}
 
+      - name: Create release tag
+        if: github.ref == 'refs/heads/main' && inputs.is_release == 'true'
+        run: |
+          git tag -a "${{ steps.version.outputs.resolved_version }}" \
+            -m "Releasing build ${{ github.run_number }}"
+          git push origin "${{ steps.version.outputs.resolved_version }}"
+
       - name: Build SBOM using the Syft plugin for Docker
         id: sbom
         run: |
