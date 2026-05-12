@@ -36,6 +36,7 @@ jobs:
         uses: ks-no/github-actions-public/checkout@main
 
       - name: Resolve version
+        id: version
         uses: ks-no/github-actions-public/complete-version-resolvement@main
         with:
           semver_increment: ${{ inputs.semver_increment }}
@@ -58,7 +59,7 @@ jobs:
         run: |
           BOM_FILE="${{ env.IMAGE_NAME }}-sbom.json"
           curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
-          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}
+          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.resolved_version }}
           echo "bom_file=$BOM_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Upload SBOM to Dependency-Track
