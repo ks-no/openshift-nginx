@@ -56,7 +56,7 @@ jobs:
           tags: ${{ steps.version.outputs.resolved_version }}
 
       - name: Create release tag
-        if: github.ref == 'refs/heads/main' && inputs.is_release == 'true'
+        if: inputs.is_release == 'true'
         run: |
           git tag -a "${{ steps.version.outputs.resolved_version }}" \
             -m "Releasing build ${{ github.run_number }}"
