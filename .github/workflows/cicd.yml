@@ -53,11 +53,12 @@ jobs:
           dockerfile: 'nginx/Dockerfile'
           tags: ${{ steps.version.outputs.version }}
 
-      - name: Build SBOM
+      - name: Build SBOM using the Syft plugin for Docker
         id: sbom
         run: |
           BOM_FILE="${{ env.IMAGE_NAME }}-sbom.json"
-          docker scout sbom --format cyclonedx -o $BOM_FILE docker-local-snapshots.artifactory.fiks.ks.no/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
+          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           echo "bom_file=$BOM_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Upload SBOM to Dependency-Track
@@ -69,6 +70,7 @@ jobs:
       - name: Publish to GitHub Packages
         run: |
           TARGET_IMAGE="${REGISTRY}/ks-no/openshift-nginx/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          docker
           docker tag ${{ env.IMAGE_NAME }} "$TARGET_IMAGE"
           docker login -u ${{ github.actor }} -p "$PASSWORD" "$REGISTRY"
           docker push "$TARGET_IMAGE"
