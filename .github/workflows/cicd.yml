@@ -58,7 +58,7 @@ jobs:
         run: |
           BOM_FILE="${{ env.IMAGE_NAME }}-sbom.json"
           curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
-          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.resolved_version }}
+          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}
           echo "bom_file=$BOM_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Upload SBOM to Dependency-Track
