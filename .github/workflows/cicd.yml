@@ -86,6 +86,7 @@ jobs:
           bom_file: ${{ steps.sbom.outputs.bom_file }}
 
       - name: Publish to GitHub Packages
+        if: inputs.is_release == true
         run: |
           TARGET_IMAGE="${REGISTRY}/ks-no/openshift-nginx/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.resolved_version }}"
           docker
