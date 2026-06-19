@@ -71,12 +71,12 @@ jobs:
             -m "Releasing build ${{ github.run_number }}"
           git push origin "${{ steps.version.outputs.resolved_version }}"
 
-      - name: Build SBOM using the Syft plugin for Docker
+      - name: Build SBOM using Syft
         id: sbom
         run: |
           BOM_FILE="${{ env.IMAGE_NAME }}-sbom.json"
-          curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
-          docker sbom --format cyclonedx-json -o $BOM_FILE ${{ env.IMAGE_NAME }}
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft scan ${{ env.IMAGE_NAME }} -o cyclonedx-json=$BOM_FILE
           echo "bom_file=$BOM_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Upload SBOM to Dependency-Track
