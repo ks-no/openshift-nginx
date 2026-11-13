@@ -63,6 +63,7 @@ jobs:
           is_release: ${{ inputs.is_release }}
           dockerfile: 'nginx/Dockerfile'
           tags: ${{ steps.version.outputs.resolved_version }}
+          dt_api_key: ${{ secrets.DEPENDENCY_TRACK_API_KEY }}
 
       - name: Create release tag
         if: inputs.is_release == true
@@ -70,20 +71,6 @@ jobs:
           git tag -a "${{ steps.version.outputs.resolved_version }}" \
             -m "Releasing build ${{ github.run_number }}"
           git push origin "${{ steps.version.outputs.resolved_version }}"
-
-      - name: Build SBOM using Syft
-        id: sbom
-        run: |
-          BOM_FILE="${{ env.IMAGE_NAME }}-sbom.json"
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          syft scan ${{ env.IMAGE_NAME }} -o cyclonedx-json=$BOM_FILE
-          echo "bom_file=$BOM_FILE" >> "$GITHUB_OUTPUT"
-
-      - name: Upload SBOM to Dependency-Track
-        uses: ks-no/github-actions-public/sbom-upload-and-report@main
-        with:
-          dependency_track_api_key: ''
-          bom_file: ${{ steps.sbom.outputs.bom_file }}
 
       - name: Publish to GitHub Packages
         if: inputs.is_release == true
